@@ -482,9 +482,15 @@ class signal_analyser(thesdk):
                 if self.annotate_harmonics and psd[idx] > baseline:
                     #harmtxt = "-%.02f dBc" % -psd[harmonics[i]]
                     harmtxt = "H%d" % (i+2)
+                    fontsize = plt.rcParams['xtick.labelsize']
+                    if type(fontsize) == str:
+                        fontsize='x-small'
+                    else:
+                        fontsize -= 2
+
                     t=plt.text(freq_axis[idx],psd[idx]+1,harmtxt,\
                             horizontalalignment='center',\
-                            fontsize=plt.rcParams['xtick.labelsize']-2,\
+                            fontsize=fontsize,\
                             verticalalignment='bottom')
 
     def add_mismatch_annotation(self,norm_nyq_mag_db,freq_axis):
