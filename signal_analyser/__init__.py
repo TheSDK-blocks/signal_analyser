@@ -86,6 +86,8 @@ class signal_analyser(thesdk):
         limit at the mean value of the visual noise floor, 'auto' fits the full
         data to view and 'noisemin' sets the limit to minimum component of the
         noise floor.
+    xlim: int, default automatically determined
+        Location of x-axis maximum limit in the freqscale units.
     title: str, default ''
         Title for the produced figure.
     annotations: list(str), {'SNDR','SNR','ENOB','SFDR','THD','Range'}, default ['']
@@ -196,6 +198,7 @@ class signal_analyser(thesdk):
         self.freqscale = 'MHz'
         self.linlog = 'lin'
         self.ylim = 'noisecross'
+        self.xlim = None
         self.title = ''
 
         # Things to annotate in this order (case insesitive)
@@ -688,6 +691,8 @@ class signal_analyser(thesdk):
                 plt.ylim(self.minnoise, 5)
             if self.linlog != 'log':
                 plt.xlim(left=0)
+            if self.xlim != None:
+                plt.xlim(right=self.xlim)
             #plt.ylim((self.maxnoise+self.psdmean)/2, 5)
             if self.sfdr != 0:
                 if self.sfdr_pointer:
