@@ -707,9 +707,9 @@ class signal_analyser(thesdk):
                 figure.savefig(fname,format=self.figformat)
             if self.plot:
                 plt.show(block=False)
+                plt.pause(0.5)
             else:
                 plt.close(figure)
-            plt.pause(0.5)
 
             self.IOS.Members['out'].Data = np.hstack((freq_axis.reshape(-1,1),norm_nyq_mag_db.reshape(-1,1)))
         except Exception as e:
