@@ -595,7 +595,7 @@ class signal_analyser(thesdk):
             magnitude = np.add(magnitude,(np.square(np.absolute(ffp.fft(signal,n=self.nsamp)))/n_batch))
 
         if self.rangeunit == 'bits':
-            self.fullscale = np.log2(fullscale)
+            self.fullscale = np.log2(fullscale+1)
         else:
             self.fullscale = fullscale
 
