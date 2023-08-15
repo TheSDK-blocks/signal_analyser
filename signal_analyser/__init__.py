@@ -609,6 +609,10 @@ class signal_analyser(thesdk):
         #norm_nyq_mag_db[0] = np.nan
         freq_axis = np.delete(freq_axis,0)
 
+        if self.export[0]:
+            if not os.path.isdir(os.path.dirname(self.export[1])):
+                self.print_log(type='I', msg='Export path %s doesn\'t exist! Creating.' % self.export[1])
+                os.makedirs(self.export[1])
         if self.export[0] and self.export_csv:
             exportarray = np.stack((freq_axis,norm_nyq_mag_db),axis=-1)
             np.savetxt("%s.csv"%self.export[1],exportarray,delimiter=",")
