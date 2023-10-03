@@ -687,12 +687,15 @@ class signal_analyser(thesdk):
             if self.fstop != 0:
                 plt.axvline(self.fstop*self.xscale,ls=':',c='0.5')
 
-            if self.ylim == 'noisecross':
-                plt.ylim(self.noisecross, 5)
-            elif self.ylim == 'noisemean':
-                plt.ylim(self.psdmean-5, 5)
-            elif self.ylim == 'noisemin':
-                plt.ylim(self.minnoise, 5)
+            if isinstance(self.ylim, str):
+                if self.ylim == 'noisecross':
+                    plt.ylim(self.noisecross, 5)
+                elif self.ylim == 'noisemean':
+                    plt.ylim(self.psdmean-5, 5)
+                elif self.ylim == 'noisemin':
+                    plt.ylim(self.minnoise, 5)
+            else:
+                plt.ylim(*self.ylim)
             if self.linlog != 'log':
                 plt.xlim(left=0)
             if self.xlim != None:
