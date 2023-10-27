@@ -90,7 +90,7 @@ class signal_analyser(thesdk):
         Location of x-axis maximum limit in the freqscale units.
     title: str, default ''
         Title for the produced figure.
-    annotations: list(str), {'SNDR','SNR','ENOB','SFDR','THD','Range'}, default ['']
+    annotations: list(str), {'SNDR','SNR','ENOB','SFDR','THD','Range','FOMW','FOMS'}, default ['']
         Configures the metrics to annotate to the figure as a list of strings.
         The order of the metrics defines the order in the figure, and the words
         are case in-sensitive.
@@ -186,6 +186,9 @@ class signal_analyser(thesdk):
         self.nsamp = 2**10
         self.sig_osr = 1
         self.nadc = 1
+
+        # Power consumption (for FOM calculation)
+        self.power_consumption = None
 
         self.window = False
 
@@ -441,6 +444,14 @@ class signal_analyser(thesdk):
                 textstr += "SNR = %.02f dB\n" % self.snr
             if a.upper() == "THD":
                 textstr += "THD = %.02f dBc\n" % self.thd
+            if a.upper() == "FOMW" and self.fom_w:
+                textstr += "FoM_W = %.02f fJ/step\n" % self.fom_w
+            if a.upper() == "FOMW" and not self.fom_w:
+                self.print_log(type='W', msg='Could not calculate Walden Figure-of-Merit. Did you set self.power_consumption?')
+            if a.upper() == "FOMS" and self.fom_s:
+                textstr += "FoM_S = %.02f dB\n" % self.fom_s
+            elif a.upper() == "FOMS" and not self.fom_s:
+                self.print_log(type='W', msg='Could not calculate Schreier Figure-of-Merit. Did you set self.power_consumption?')
 
         if textstr != '':
             textstr = textstr.rstrip()
@@ -559,6 +570,14 @@ class signal_analyser(thesdk):
         self.skew_mismatch_data = np.unique(self.skew_mismatch_data,axis=1)
         self.offs_mismatch_data = np.unique(self.offs_mismatch_data,axis=1)
 
+    def calculate_fom(self):
+        if self.power_consumption != None:
+            self.fom_w = self.power_consumption / (2**self.enob * self.fs) / 1e-15
+            self.fom_s = self.sndr + 10*np.log10(self.fs / (2*self.power_consumption))
+        else: # Cannot calculate as power was not given
+            self.fom_w = None
+            self.fom_s = None
+
     def main(self):
         """Main functionality.
         """
@@ -643,6 +662,7 @@ class signal_analyser(thesdk):
         self.calculate_snr(norm_nyq_mag_db,freq_axis,self.fstart*self.xscale,self.fstop*self.xscale)
         self.calculate_maxamp(nyq_mag,nyq_index)
         self.calculate_retamps(nyq_mag,nyq_index,freq_axis)
+        self.calculate_fom()
 
         infostr = 'SNDR = %.03f dB (@ f_in = %.03f %s, f_s = %.03f %s.)' % (self.sndr,\
                 self.sigfreq,self.freqscale,self.fs_scaled,self.freqscale)
