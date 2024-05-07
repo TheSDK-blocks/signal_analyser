@@ -445,11 +445,11 @@ class signal_analyser(thesdk):
             if a.upper() == "THD":
                 textstr += "THD = %.02f dBc\n" % self.thd
             if a.upper() == "FOMW" and self.fom_w:
-                textstr += "FoM_W = %.02f fJ/step\n" % self.fom_w
+                textstr += r"FoM$_W$"+" = %.02f fJ/step\n" % self.fom_w
             if a.upper() == "FOMW" and not self.fom_w:
                 self.print_log(type='W', msg='Could not calculate Walden Figure-of-Merit. Did you set self.power_consumption?')
             if a.upper() == "FOMS" and self.fom_s:
-                textstr += "FoM_S = %.02f dB\n" % self.fom_s
+                textstr += r"FoM$_S$"+" = %.02f dB\n" % self.fom_s
             elif a.upper() == "FOMS" and not self.fom_s:
                 self.print_log(type='W', msg='Could not calculate Schreier Figure-of-Merit. Did you set self.power_consumption?')
 
