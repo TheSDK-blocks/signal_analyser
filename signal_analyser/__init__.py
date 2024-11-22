@@ -732,6 +732,7 @@ class signal_analyser(thesdk):
                 fname = "%s.%s"%(self.export[1], self.figformat)
                 self.print_log(type='I',msg='Saving figure to %s.' % fname)
                 figure.savefig(fname,format=self.figformat)
+            self.figure = figure
             if self.plot:
                 plt.show(block=False)
                 plt.pause(0.5)
