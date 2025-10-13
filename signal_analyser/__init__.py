@@ -16,6 +16,7 @@ import numpy as np
 import tempfile
 import scipy.fftpack as ffp
 import scipy.signal as ss
+import scipy
 import matplotlib.pyplot as plt
 
 import copy
@@ -148,7 +149,7 @@ class signal_analyser(thesdk):
         Accessible after calling run().
     spur_offs: float
         Read the calculated highest spur level of offset mismatch. Only
-        calculated when any of the mismatch annotations is enabled, else None.
+        calculat when any of the mismatch annotations is enabled, else None.
         Only applicable to time-interleaved ADC outputs. Accessible after
         calling run().
     skew_mismatch_data: ndarray of shape (2,Ng). Ng = number of gain spurs
@@ -203,6 +204,8 @@ class signal_analyser(thesdk):
         self.ylim = 'noisecross'
         self.xlim = None
         self.title = ''
+        # TODO: Add complex IQ support here
+        self.enable_complex_iq = False
 
         # Things to annotate in this order (case insesitive)
         self.annotations = ['']
@@ -578,9 +581,104 @@ class signal_analyser(thesdk):
             self.fom_w = None
             self.fom_s = None
 
+    
+    def scale_dbm(self, x, dbm):
+        """Scale signal amplitude so that its peak power has `dbm` power"""
+        P_abs = 0.001 * 10**(dbm/10)
+
+        # measure peak power of original signal
+        N = len(x)
+        # no need to window because we are analyzing periodic signals with transients
+        X = scipy.fft.fft(x) / N
+        P = (np.abs(X)**2)/(2*50)
+        P_max = np.max(P)
+
+        # required gain
+        gain_abs = P_abs / P_max
+        gain_ampl = np.sqrt(gain_abs)
+        
+        return x * gain_ampl
+
+    def plot_bb_spectrum(self, x, fs, scale='dbfs', annotate_max=False, window='rect', color='red', ylim=[-100,10]):
+        N = len(x)
+
+        # Apply windowing function
+        # use sym=False for spectral analysis
+        if window == 'rect':
+            window = np.ones(N)
+        elif window == 'flattop':
+            # for power estimation
+            window = scipy.signal.windows.flattop(N, sym=False)
+        elif window == 'hann':
+            window = scipy.signal.windows.hann(N, sym=False)
+        else:
+            raise NotImplementedError("window type not implemented")
+        # normalize by average value of windowing function to preserve amplitude
+        window /= np.mean(window)
+        x_windowed = x*window
+
+        # normalization of X is not strictly necessary if plotting in dBFS
+        f = scipy.fft.fftfreq(N, d=1/fs)
+        X = scipy.fft.fft(x_windowed) / N
+        f2 = scipy.fft.fftshift(f)
+        X2 = scipy.fft.fftshift(X)
+
+        ax = plt.gca()
+
+        # amplitude to dB conversion
+        if scale=='abs':
+            P_plot = np.abs(X2)
+        if scale=='dbfs':
+            P = np.abs(X2)**2
+            P_norm = P / np.max(P)
+            P_plot = 10*np.log10(P_norm)
+            ax.set_ylim(ylim[0], ylim[1])
+        if scale=='v2dbm':
+            # amplitude to dbm, assuming np.abs(X2) is voltage (amplitude)
+            voltage = np.abs(X2)
+            power = (voltage**2)/(2*50)
+            P_dbm = 10*np.log10(power/0.001)
+            P_plot = P_dbm
+            ax.set_ylim(ylim[0], ylim[1])
+
+
+        # formatter = EngFormatter(unit='Hz')
+        # ax.xaxis.set_major_formatter(formatter)
+
+        # adjust freq unit
+        ax.set_xlabel("Frequency [MHz]")
+        f2 /= 1e6
+
+        # zoom in
+        # todo: parameterize
+        width = 256
+        start = N//2 - width
+        end = N//2 + width
+
+        # don't zoom in
+        start = 0
+        end = len(x)
+
+        # find peak
+        if annotate_max:
+            i_max = np.argmax(P_plot)
+            P_max = P_plot[i_max]
+
+        # plot spectrum
+        plt.plot(f2[start:end], P_plot[start:end], linewidth=2, color=color)
+
+        # annotate peak
+        if annotate_max:
+            plt.scatter(f2[i_max], P_max)
+            plt.annotate(f"({f2[i_max]:.3f}, {P_max:.1f})", xy=(f2[i_max],P_max), xycoords='data', xytext=(5,5), textcoords='offset points', fontsize=8)
+            print(f"peak at f={f2[i_max]}")
+
+        return (f2, X2)
+
     def main(self):
         """Main functionality.
         """
+
         in_data = copy.deepcopy(self.IOS.Members['in'].Data)
 
         if not isinstance(in_data,list):
@@ -589,6 +687,42 @@ class signal_analyser(thesdk):
         else:
             signal_list = in_data
             n_batch = len(signal_list)
+
+        # TODO: Integrate iq plotting better. This is temporary solution.
+        #################################################################
+        # (All IQ signal modifications in main() are done inside this interval for now)
+        if self.enable_complex_iq: # Enable IQ mode in __init__
+            for iq_signal in signal_list:
+                
+                #if type(iq_signal) != np.complex128:
+                #    raise TypeError("IQ signal data type must be numpy.complex128")
+
+                label = "test"
+
+                # time-domain
+                plt.figure()
+                plt.title(label + " s(t)")
+                plt.plot(iq_signal.real)
+                plt.plot(iq_signal.imag)
+                plt.legend(['I','Q'])
+
+                # Scale to dbm for frequency domain analysis
+                iq_signal_scaled = self.scale_dbm(iq_signal, -30)
+
+                # spectrum
+                plt.figure()
+                plt.title(label + " s(f)")
+                plt.grid()
+                plt.ylabel("dBm")
+                self.plot_bb_spectrum(iq_signal_scaled, self.fs, scale='v2dbm', window='rect', color='black', ylim=[-70,10])
+
+                if self.plot:
+                    plt.show(block=False)
+                    plt.pause(0.5)
+                else:
+                    plt.close(figure)
+            return
+        #################################################################
 
         self.harmpowers = []
         self.retampsdBV = np.zeros(len(self.retfreqs))
