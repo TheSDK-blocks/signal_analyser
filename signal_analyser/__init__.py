@@ -620,8 +620,11 @@ class signal_analyser(thesdk):
         # normalization of X is not strictly necessary if plotting in dBFS
         f = scipy.fft.fftfreq(N, d=1/fs)
         X = scipy.fft.fft(x_windowed) / N
+        # add small value if some elements are 0 
+        epsilon = 1e-12
+        X_safe = np.where(X == 0, epsilon, X)
         f2 = scipy.fft.fftshift(f)
-        X2 = scipy.fft.fftshift(X)
+        X2 = scipy.fft.fftshift(X_safe)
 
         ax = plt.gca()
 
