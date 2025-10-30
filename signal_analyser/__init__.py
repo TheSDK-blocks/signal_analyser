@@ -723,7 +723,7 @@ class signal_analyser(thesdk):
                     plt.show(block=False)
                     plt.pause(0.5)
                 else:
-                    plt.close(figure)
+                    plt.close()
             return
         #################################################################
 
