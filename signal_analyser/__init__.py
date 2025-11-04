@@ -696,23 +696,27 @@ class signal_analyser(thesdk):
         # (All IQ signal modifications in main() are done inside this interval for now)
         if self.enable_complex_iq: # Enable IQ mode in __init__
             for iq_signal in signal_list:
+                self.print_log(type='I', msg='Printing time domain plot')
                 
-                #if type(iq_signal) != np.complex128:
-                #    raise TypeError("IQ signal data type must be numpy.complex128")
-
                 # time-domain
                 plt.figure()
-                plt.title(self.title + " s(n)")
+                plt.title(self.title + " - time domain")
                 plt.plot(iq_signal.real)
                 plt.plot(iq_signal.imag)
                 plt.legend(['I','Q'])
+
+                if self.plot:
+                    plt.show(block=False)
+                    plt.pause(0.5)
+                else:
+                    plt.close()
 
                 # Scale to dbm for frequency domain analysis
                 iq_signal_scaled = self.scale_dbm(iq_signal, -30)
 
                 # spectrum
                 plt.figure()
-                plt.title(self.title + " s(f)")
+                plt.title(self.title + " - frequency domain")
                 plt.grid()
                 plt.ylabel("dBm")
                 self.plot_bb_spectrum(iq_signal_scaled, self.fs, scale='v2dbm', window='rect', color='black', ylim=[-70,10])
