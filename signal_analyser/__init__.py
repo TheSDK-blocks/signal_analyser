@@ -700,11 +700,9 @@ class signal_analyser(thesdk):
                 #if type(iq_signal) != np.complex128:
                 #    raise TypeError("IQ signal data type must be numpy.complex128")
 
-                label = "test"
-
                 # time-domain
                 plt.figure()
-                plt.title(label + " s(t)")
+                plt.title(self.title + " s(n)")
                 plt.plot(iq_signal.real)
                 plt.plot(iq_signal.imag)
                 plt.legend(['I','Q'])
@@ -714,7 +712,7 @@ class signal_analyser(thesdk):
 
                 # spectrum
                 plt.figure()
-                plt.title(label + " s(f)")
+                plt.title(self.title + " s(f)")
                 plt.grid()
                 plt.ylabel("dBm")
                 self.plot_bb_spectrum(iq_signal_scaled, self.fs, scale='v2dbm', window='rect', color='black', ylim=[-70,10])
