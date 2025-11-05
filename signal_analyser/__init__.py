@@ -362,7 +362,8 @@ class signal_analyser(thesdk):
             peak_idcs = ss.find_peaks(tmppsd,distance=2)[0]
             peaks_sorted = np.flipud(np.sort(tmppsd[peak_idcs]))
             self.sigidx = np.where(tmppsd == peaks_sorted[0])[0][0]
-            self.sigfreq = tmpfreq[np.where(tmppsd == peaks_sorted[0])[0][0]]
+            self.sigfreq = round(tmpfreq[np.where(tmppsd == peaks_sorted[0])[0][0]], int('{:.1e}'.format(self.xscale).split('-')[-1]))
+
             self.sfdr = peaks_sorted[0]-peaks_sorted[1]
             self.spuridx = np.where(tmppsd == peaks_sorted[1])[0][0]
             self.spurfreq = tmpfreq[self.spuridx]
