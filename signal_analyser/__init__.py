@@ -494,6 +494,9 @@ class signal_analyser(thesdk):
                 idx = int(self.harmidcs[i])
                 self.harmpowers.append(psd[idx])
                 if self.annotate_harmonics and psd[idx] > baseline:
+                    if self.xlim:
+                        if self.xlim < freq_axis[idx]:
+                            continue
                     #harmtxt = "-%.02f dBc" % -psd[harmonics[i]]
                     harmtxt = "H%d" % (i+2)
                     fontsize = plt.rcParams['xtick.labelsize']
