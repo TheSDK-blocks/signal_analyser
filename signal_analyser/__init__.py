@@ -299,7 +299,7 @@ class signal_analyser(thesdk):
                 rem = fharm % (self.fs_scaled/2)
                 alias = np.floor(fharm/(self.fs_scaled/2))
                 if alias % 2 == 0:
-                    self.harmidcs[i] = np.where(freq_axis >= rem)[0][0]
+                    self.harmidcs[i] = np.argmin(abs(freq_axis - rem))
                 else:
                     self.harmidcs[i] = np.where(freq_axis >= self.fs_scaled/2-rem)[0][0]
                 hd_pow = psd[self.harmidcs[i]]
@@ -362,7 +362,7 @@ class signal_analyser(thesdk):
             peak_idcs = ss.find_peaks(tmppsd,distance=2)[0]
             peaks_sorted = np.flipud(np.sort(tmppsd[peak_idcs]))
             self.sigidx = np.where(tmppsd == peaks_sorted[0])[0][0]
-            self.sigfreq = tmpfreq[np.where(tmppsd == peaks_sorted[0])[0][0]]
+            self.sigfreq = tmpfreq[np.argmin(abs(tmppsd-peaks_sorted[0]))]
             self.sfdr = peaks_sorted[0]-peaks_sorted[1]
             self.spuridx = np.where(tmppsd == peaks_sorted[1])[0][0]
             self.spurfreq = tmpfreq[self.spuridx]
@@ -781,7 +781,6 @@ if __name__=="__main__":
         self.print_log(type='W',msg='Module \'plot_format\' not in path. Plot formatting might look incorrect.')
 
     fs=2e9
-    #f = 75.1953125e6
     f = 700.1953125e6
     nsamp = 2**12
     t = np.linspace(0,nsamp/fs,num=nsamp,endpoint=False)
@@ -793,7 +792,7 @@ if __name__=="__main__":
 
     duts=[signal_analyser() for i in range(1) ]
     duts[0].model='py'
-    for d in duts: 
+    for d in duts:
         d.fs = fs
         d.nsamp = nsamp
         d.window = False
@@ -808,4 +807,3 @@ if __name__=="__main__":
         d.init()
         d.run()
     input()
-
